@@ -4,6 +4,7 @@
 #include "verilated_vcd_c.h"
 
 vluint64_t main_time = 0;
+#define C0 32000
 
 int main(int argc, char **argv, char **env) {
     Verilated::commandArgs(argc, argv);
@@ -18,6 +19,7 @@ int main(int argc, char **argv, char **env) {
     top->clk = 1;
     top->rst = 1;
     top->din = 0;
+    top->c = C0;
 
     for (int i = 0; i < 4; i++) {
         top->eval();
@@ -27,12 +29,25 @@ int main(int argc, char **argv, char **env) {
     }
 
     top->rst = 0;
+    int i = 0;
 
     do {
         top->eval();
         vcd->dump(main_time);
         top->clk = top->clk ? 0 : 1;
+
+        if (i == 1) {
+            top->din = 0x7fff;
+        } else {
+            top->din = 0;
+        }
+
         main_time++;
+        if (main_time % 2 == 0) {
+            // top->din = sinf(2.0 * M_PI * (float)(i)*0.05) * 0x7fff;
+            i++;
+        }
+
     } while (main_time < 100 && !Verilated::gotFinish());
 
     top->final();
