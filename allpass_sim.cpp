@@ -36,15 +36,15 @@ int main(int argc, char **argv, char **env) {
         vcd->dump(main_time);
         top->clk = top->clk ? 0 : 1;
 
-        if (i == 1) {
-            top->din = 0x7fff;
-        } else {
-            top->din = 0;
-        }
+        // if (i == 1) {
+        //     top->din = 0x7fff;
+        // } else {
+        //     top->din = 0;
+        // }
 
         main_time++;
         if (main_time % 2 == 0) {
-            // top->din = sinf(2.0 * M_PI * (float)(i)*0.05) * 0x7fff;
+            top->din = sinf(2.0 * M_PI * (float)(i)*0.05) * 0x7fff;
             i++;
         }
 
