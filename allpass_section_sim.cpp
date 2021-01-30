@@ -6,7 +6,7 @@
 #include <math.h>
 
 vluint64_t main_time = 0;
-#define C0 -32000
+#define C0 32767
 
 static int16_t ap_section(int16_t din, int16_t c, int rst) {
     static int16_t a;
@@ -19,13 +19,10 @@ static int16_t ap_section(int16_t din, int16_t c, int rst) {
         b[1] = 0;
     } else {
         a0 = a;
-        b[3] = b[2];
-        b[2] = b[1];
-        b[1] = b[0];
         a = din - (int16_t)((a0 * c) >> 16);
         b[0] = (int16_t)((a * c) >> 16) + a0;
     }
-    return (int16_t)b[3];
+    return (int16_t)b[0];
 }
 
 int main(int argc, char **argv, char **env) {
@@ -44,6 +41,7 @@ int main(int argc, char **argv, char **env) {
     top->c = C0;
 
     for (int i = 0; i < 4; i++) {
+        top->ain = top->aout;
         top->eval();
         vcd->dump(main_time);
         top->clk = top->clk ? 0 : 1;
@@ -54,24 +52,20 @@ int main(int argc, char **argv, char **env) {
     int i = 0;
     int16_t ap = 0;
     do {
-        if (top->clk) {
-            ap = ap_section(top->din, top->c, 0);
-            printf("%8hd:%8hd:%8hd\n", (int16_t)top->dout, ap, (int16_t)top->dout - ap);
-        }
         top->eval();
         vcd->dump(main_time);
 
         top->clk = top->clk ? 0 : 1;
-        // if (i == 1) {
-        //     top->din = 0x7fff;
-        // } else {
-        //     top->din = 0;
-        // }
-        main_time++;
-        if (main_time % 2 == 0) {
-            top->din = sinf(2.0 * M_PI * (float)(i)*0.05) * 0x7fff;
+        top->ain = top->aout;
+        if (top->clk) {
+            ap = ap_section(top->din, top->c, 0);
+            printf("%8hd:%8hd:%8hd\n", (int16_t)top->dout, ap, (int16_t)top->dout - ap);
+            // top->din = sinf(2.0 * M_PI * (float)(i)*0.05) * 0x7fff;
+            top->din = (i == 1) ? 0x7fff : 0;
             i++;
         }
+
+        main_time++;
     } while (main_time < 100 && !Verilated::gotFinish());
 
     top->final();
