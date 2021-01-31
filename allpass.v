@@ -16,11 +16,16 @@ module allpass #(
     reg signed [WIDTH-1:0] az[0:N-2];
     reg signed [WIDTH-1:0] bz[0:N-2];
     reg signed [WIDTH*2-1:0] sum;
+    reg signed [WIDTH*2-1:0] ma[0:N-2];
+    reg signed [WIDTH*2-1:0] mb[0:N-2];
 
     always @(*) begin
         sum = din * cc[0];
         for (i = 0; i < N - 1; i = i + 1) begin
-            sum = sum + bz[i] * cc[i+1] - az[i] * cc[N-1-i];
+            ma[i] = az[i] * cc[N-1-i];
+            mb[i] = bz[i] * cc[i+1];
+            sum = sum + mb[i] - ma[i];
+            // sum = sum + bz[i] * cc[i+1] - az[i] * cc[N-1-i];
         end
     end
 
