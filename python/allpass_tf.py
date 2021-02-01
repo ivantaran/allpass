@@ -19,14 +19,19 @@ sys: signal.TransferFunction
 sys = signal.TransferFunction(a, np.flip(a), dt=dt)
 w, mag, phase = signal.dbode(sys, w=wsys)
 # butter = signal.dlti(*signal.butter(4, 0.01))
-t, y = signal.dimpulse(sys, n=1000)
-fig, ax = pyplot.subplots(2, 1)
-ax1 = ax[0]
-ax3 = ax[1]
+t, y = signal.dimpulse(sys, n=100)
+# fig, ax = pyplot.subplots(2, 1)
+ax1 = pyplot.subplot(212)
+ax3 = pyplot.subplot(221)
 ax2 = ax1.twinx()
 ax1.plot(w, mag, 'b')
 ax2.plot(w, phase, 'r')
 ax1.set_ylim([-1.0, 1.0])
+ax4 = pyplot.subplot(222)
+ax4: pyplot.Axes
+circle = pyplot.Circle((0, 0), 1.0)
+ax4.plot(sys.num, 'o')
+ax4.add_patch(circle)
 # ax3.plot(t * 1.0e9, 20.0 * np.log10(np.abs(np.squeeze(y))))
 ax3.step(t * 1.0e9, np.squeeze(y))
 ax1.grid()
