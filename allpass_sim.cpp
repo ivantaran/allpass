@@ -6,19 +6,8 @@
 vluint64_t main_time = 0;
 
 #define SCALE 2.0
-
-#define C0 int16_t(32767 / SCALE)
-#define C1 int16_t(-20480 / SCALE)
-#define C2 int16_t(29793 / SCALE)
-#define C3 int16_t(-1025 / SCALE)
-#define C4 int16_t(-2494 / SCALE)
-#define C5 int16_t(0 / SCALE)
-// #define C0 int16_t(15793 / SCALE)
-// #define C1 int16_t(-7293 / SCALE)
-// #define C2 int16_t(32767 / SCALE)
-// #define C3 int16_t(-9097 / SCALE)
-// #define C4 int16_t(17564 / SCALE)
-// #define C5 int16_t(0 / SCALE)
+// static const int16_t coeff[] = {6914, -7541, 17069, -8251};
+static const int16_t coeff[] = {9111, -4719, 16997, -3783};
 
 int main(int argc, char **argv, char **env) {
     Verilated::commandArgs(argc, argv);
@@ -33,9 +22,10 @@ int main(int argc, char **argv, char **env) {
     top->clk = 1;
     top->rst = 1;
     top->din = 0;
-    top->c[0] = (C1 << 16) | C0;
-    top->c[1] = (C3 << 16) | C2;
-    top->c[2] = (C5 << 16) | C4;
+    top->c = (int64_t)coeff[0] & 0xffff;
+    top->c |= ((int64_t)coeff[1] & 0xffff) << 16;
+    top->c |= ((int64_t)coeff[2] & 0xffff) << 32;
+    top->c |= ((int64_t)coeff[3] & 0xffff) << 48;
 
     for (int i = 0; i < 4; i++) {
         top->eval();
@@ -51,20 +41,14 @@ int main(int argc, char **argv, char **env) {
         top->eval();
         vcd->dump(main_time);
         top->clk = top->clk ? 0 : 1;
-
-        if (i == 1) {
-            top->din = 0x7fff;
-        } else {
-            top->din = 0;
-        }
-
-        main_time++;
-        if (main_time % 2 == 0) {
-            // top->din = sinf(2.0 * M_PI * (float)(i)*0.05) * 0x7fff;
+        if (top->clk) {
+            top->din = (i == 1) ? 16384 : 0;
+            // top->din = 16383;
+            // top->din = sinf(2.0 * M_PI * (float)(i)*0.05) * 16384.0;
             i++;
         }
-
-    } while (main_time < 100 && !Verilated::gotFinish());
+        main_time++;
+    } while (main_time < 200 && !Verilated::gotFinish());
 
     top->final();
 
