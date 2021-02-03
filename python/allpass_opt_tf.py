@@ -19,6 +19,7 @@ def init(n=3):
     dref = dref * 0.2 / 19.0 / lam * 360.0 / 180.0 * 1.0
 
     np.random.seed()
+    # a = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
     a = np.random.randn(n)
     b = np.random.randn(1)
     wsys = np.arange(24.0e6 % 562500.0, 50.0e6, 562500.0) * np.pi * 2.0 * dt
@@ -33,11 +34,18 @@ def a2sys(a, dt):
     a: np.ndarray
     n = a.shape[0]
     p = np.array(a, dtype='complex')
-    for i in range(0, n, 2):
+    for i in range(0, n - 1, 2):
         if a[i] < a[i + 1]:
             delta = (a[i + 1] - a[i]) * 0.5
             p[i] = np.complex(a[i], delta)
             p[i + 1] = np.complex(a[i], -delta)
+    r = np.abs(p)
+    # r = np.clip(r, 0.0, 0.99)
+    max = np.max(r)
+    if max > 1.0:
+        r /= max
+    angles = np.angle(p)
+    p = r * np.exp(1.0j * angles)
     den = np.poly(p)
     num = np.flip(den)
     sys = signal.TransferFunction(num, den, dt=dt)
@@ -102,13 +110,13 @@ def error(wsys, sys: signal.TransferFunction, b, dref, n=35):
 #     return delta
 
 
-n = 6
+n = 5
 a, b, wsys, dref, p = init(n)
 sys = a2sys(a, p['dt'])
 
 lam = 0.001
 # delta = tune_delta(wsys, sys, b)
-delta = np.ones(n) * 1.0e-9
+delta = np.ones(n) * 1.0e-5
 cc = []
 sigma = 1.0e0
 
@@ -140,7 +148,8 @@ while True:
     h = np.matmul(jac, jac.transpose())
     # hinv = np.linalg.pinv(h)
     # hinv = np.linalg.pinv(lam0 * np.identity(sys.num.shape[0]))
-    hinv = np.linalg.pinv(h + lam0 * identity * h + identity * 1.0)
+    # hinv = np.linalg.pinv(h + lam0 * identity * h + identity * 0.001)
+    hinv = np.linalg.pinv(h + lam0 * identity * h)
     e = np.reshape(error(wsys, sys, b, dref), (wsys.shape[0], 1))
     da = np.matmul(hinv, jac)
     da = np.matmul(da, e)
@@ -168,13 +177,15 @@ while True:
         # lam0 /= 1.0 + np.random.random() * 5.0
     else:
         lam0 *= 1.5
-    if lam0 < 1.0e-20 or lam0 > 1.0e20:
-        lam0 = 1.0e-20
+    if lam0 < 1.0e-60 or lam0 > 1.0e60:
+        lam0 = 1.0e-60
 
     cc.append(c0)
     if (i % batch_size) == 0:
         # delta = tune_delta(wsys, sys, b)
         y = fx(wsys, sys, b)
+        _, _, phase = sys.bode(w=wsys)
+
         # print(c)
         ax: pyplot.Axes
         ax0.cla()
@@ -190,7 +201,7 @@ while True:
         ax0.plot(w, -y, '-o', alpha=0.5)
         ax0.plot(w, e, '-o')
         # ax2.plot(f0, np.gradient(dref))
-        # ax2.plot(w, np.gradient(-y))
+        ax2.plot(w, phase)
         ax1.set_xlim([0, batch_size])
         ax1.plot(np.log10(cc) * 10.0, 'o-')
 
