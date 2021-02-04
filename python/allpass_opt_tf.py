@@ -10,16 +10,15 @@ def init(n=3):
     dt = 1.0 / ft
     lam = constants.c * dt
 
-    # dref = np.array([
-    #     109.0, 92.0, 76.0, 59.0, 45.0, 32.0, 23.0, 14.0, 10.0, 7.5, 7.0, 6.0, 9.5, 15.0
-    # ])
     dref = np.array([
-        6.0, 9.0, 11.0, 15.0, 22.5, 27.5, 34.0, 38.0, 39.5, 41.0, 46.0, 57.5, 78.0, 110.0
+        109.0, 92.0, 76.0, 59.0, 45.0, 32.0, 23.0, 14.0, 10.0, 7.5, 7.0, 6.0, 9.5, 15.0
     ])
+    # dref = np.array([
+    #     6.0, 9.0, 11.0, 15.0, 22.5, 27.5, 34.0, 38.0, 39.5, 41.0, 46.0, 57.5, 78.0, 110.0
+    # ])
     dref = dref * 0.2 / 19.0 / lam * 360.0 / 180.0 * 1.0
 
     np.random.seed()
-    # a = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
     a = np.random.randn(n)
     b = np.random.randn(1)
     wsys = np.arange(24.0e6 % 562500.0, 50.0e6, 562500.0) * np.pi * 2.0 * dt
@@ -34,18 +33,14 @@ def a2sys(a, dt):
     a: np.ndarray
     n = a.shape[0]
     p = np.array(a, dtype='complex')
-    for i in range(0, n - 1, 2):
-        if a[i] < a[i + 1]:
-            delta = (a[i + 1] - a[i]) * 0.5
-            p[i] = np.complex(a[i], delta)
-            p[i + 1] = np.complex(a[i], -delta)
-    r = np.abs(p)
-    # r = np.clip(r, 0.0, 0.99)
-    max = np.max(r)
-    if max > 1.0:
-        r /= max
-    angles = np.angle(p)
-    p = r * np.exp(1.0j * angles)
+    r = a[::2]
+    f = a[1::2]
+    r = np.mod(np.abs(r), 1.0)
+    # f = np.mod(f, 1.0)
+    f = np.mod(np.abs(f), 1.0)
+    f *= np.pi
+    p[::2] = r * np.exp(1.0j * f)
+    p[1::2] = np.conj(p[::2])
     den = np.poly(p)
     num = np.flip(den)
     sys = signal.TransferFunction(num, den, dt=dt)
@@ -80,7 +75,6 @@ def fx(wsys, sys: signal.TransferFunction, b, normalize=True):
     if normalize:
         phase = (phase - 180.0) / 180.0
     y = np.gradient(phase) + b
-    # y = phase + b
     return y
 
 
@@ -89,25 +83,6 @@ def error(wsys, sys: signal.TransferFunction, b, dref, n=35):
     y = fx(wsys, sys, b)[n:n + dref.shape[0]]
     e[n:n + dref.shape[0]] = y + dref
     return e
-
-
-# def tune_delta(wsys, sys, b):
-#     epsilon0 = 1.0e-5
-#     n = sys.num.shape[0]
-#     m = wsys.shape[0]
-#     delta = np.ones(n - 1)
-#     while True:
-#         delta0 = delta / (1.0 + 10.0 * np.random.random(n - 1))
-#         jac = jacobian(wsys, sys, b, delta)[:-1]
-#         jac0 = jacobian(wsys, sys, b, delta0)[:-1]
-#         djac = np.abs(jac - jac0)
-#         idx = djac > epsilon0
-#         idx = np.sum(idx, axis=1) > 0.0
-#         if np.any(idx):
-#             delta[idx] = delta0[idx]
-#         else:
-#             break
-#     return delta
 
 
 n = 6
@@ -132,14 +107,13 @@ circle = pyplot.Circle((0, 0), 1.0, fill=False)
 w, _, _ = sys.bode(w=wsys)
 w = w * 0.5 / np.pi
 n = 35
-SCALE = 1.0e1
 f0 = w[n:dref.shape[0] + n]
 cmin = 1.0e10
 c = 20.0
 c0 = 0.0
-batch_size = 1000
+batch_size = 100
 i = 0
-lam0 = 1.0e-3  # 7.03181e-12
+lam0 = 1.0e-3
 ok = True
 # delta = tune_delta(wsys, sys, b)
 identity = np.identity(sys.num.shape[0])
