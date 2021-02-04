@@ -6,7 +6,11 @@ from scipy import constants
 
 # a = np.array([1.11215064, -0.57602822,  2.07481254, -0.46176302,  1.])
 # a = np.array([-0.07610893, -0.03128678,  0.90923851, -0.6250264,   1., ])
-a = np.array([0.843941,   -0.92055061,  2.08364254, -1.00716152,  1., ])
+# a = np.array([0.843941,   -0.92055061,  2.08364254, -1.00716152,  1., ])
+# true a = array([ 0.06649777,  1.85610518, -0.15730755,  1.7612521 , -0.08941735,
+#         1.73774138])
+a = np.array([0.64106383, 0.24360647, 2.22301208, 0.58618064, 2.58333382, 0.36047426,
+              1., ])
 scale = 2.0**13  # / np.max(np.abs(a))
 c = np.round(a * scale)
 print(c)
@@ -19,7 +23,7 @@ wsys = np.arange(24.0e6 % 562500.0, 50.0e6, 562500.0) * np.pi * 2.0 * dt
 sys: signal.TransferFunction
 sys = signal.TransferFunction(a, np.flip(a), dt=dt)
 w, mag, phase = signal.dbode(sys, w=wsys)
-t, y = signal.dimpulse(sys, n=100)
+t, y = signal.dimpulse(sys, n=1000)
 
 fig = pyplot.gcf()
 fig.set_size_inches(16, 9)

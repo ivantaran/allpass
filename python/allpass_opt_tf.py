@@ -110,7 +110,7 @@ def error(wsys, sys: signal.TransferFunction, b, dref, n=35):
 #     return delta
 
 
-n = 5
+n = 6
 a, b, wsys, dref, p = init(n)
 sys = a2sys(a, p['dt'])
 
@@ -148,8 +148,8 @@ while True:
     h = np.matmul(jac, jac.transpose())
     # hinv = np.linalg.pinv(h)
     # hinv = np.linalg.pinv(lam0 * np.identity(sys.num.shape[0]))
-    # hinv = np.linalg.pinv(h + lam0 * identity * h + identity * 0.001)
-    hinv = np.linalg.pinv(h + lam0 * identity * h)
+    # hinv = np.linalg.pinv(h + lam0 * identity * h)
+    hinv = np.linalg.pinv(h + lam0 * identity * h + identity * 0.1)
     e = np.reshape(error(wsys, sys, b, dref), (wsys.shape[0], 1))
     da = np.matmul(hinv, jac)
     da = np.matmul(da, e)
