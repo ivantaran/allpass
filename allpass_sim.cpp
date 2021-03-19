@@ -7,7 +7,10 @@ vluint64_t main_time = 0;
 
 #define SCALE 2.0
 // static const int16_t coeff[] = {6914, -7541, 17069, -8251};
-static const int16_t coeff[] = {9111, -4719, 16997, -3783};
+// static const int16_t coeff[] = {9111, -4719, 16997, -3783};
+static const int16_t coeff[] = {
+    5252, 1996, 18211, 4802, 21163, 2953,
+};
 
 int main(int argc, char **argv, char **env) {
     Verilated::commandArgs(argc, argv);
@@ -22,10 +25,12 @@ int main(int argc, char **argv, char **env) {
     top->clk = 1;
     top->rst = 1;
     top->din = 0;
-    top->c = (int64_t)coeff[0] & 0xffff;
-    top->c |= ((int64_t)coeff[1] & 0xffff) << 16;
-    top->c |= ((int64_t)coeff[2] & 0xffff) << 32;
-    top->c |= ((int64_t)coeff[3] & 0xffff) << 48;
+    top->c[0] = (int64_t)coeff[0] & 0xffff;
+    top->c[0] |= ((int64_t)coeff[1] & 0xffff) << 16;
+    top->c[1] = ((int64_t)coeff[2] & 0xffff);
+    top->c[1] |= ((int64_t)coeff[3] & 0xffff) << 16;
+    top->c[2] = ((int64_t)coeff[4] & 0xffff);
+    top->c[2] |= ((int64_t)coeff[5] & 0xffff) << 16;
 
     for (int i = 0; i < 4; i++) {
         top->eval();

@@ -2,7 +2,7 @@
 module allpass #(
     parameter WIDTH = 16, 
     parameter FIXEDPOINT = 14,
-    parameter N = 5
+    parameter N = 7
 )(
     input wire clk, 
     input wire rst, 
